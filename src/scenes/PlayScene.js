@@ -16,8 +16,26 @@ class PlayScene extends phaser.Scene {
   }
 
   create() {
-    this.add.image(0, 0, "sky").setOrigin(0, 0);
+    this.createBG();
 
+    this.createBird();
+
+    this.createPipes();
+
+    this.handleInputs();
+  }
+
+  update() {
+    this.initializeBird();
+
+    this.recylePipes();
+  }
+
+  createBG() {
+    this.add.image(0, 0, "sky").setOrigin(0, 0);
+  }
+
+  createBird() {
     this.bird = this.physics.add
       .sprite(
         this.config.birdStartPosition.x,
@@ -26,13 +44,11 @@ class PlayScene extends phaser.Scene {
       )
       .setOrigin(0);
 
-    console.log("29", this.bird);
-
     this.bird.body.gravity.y = 150;
+  }
 
+  createPipes() {
     this.pipes = this.physics.add.group();
-
-    console.log("35", this.config.totalPipes);
 
     for (let i = 0; i < this.config.totalPipes; i++) {
       const upperPipe = this.pipes.create(0, 0, "pipe").setOrigin(0, 1);
@@ -41,7 +57,9 @@ class PlayScene extends phaser.Scene {
     }
 
     this.pipes.setVelocityX(-200);
+  }
 
+  handleInputs() {
     // adding physics gravity to the bird
     this.input.on("pointerdown", () => {
       this.flap(this.bird);
@@ -54,16 +72,13 @@ class PlayScene extends phaser.Scene {
       });
   }
 
-  update() {
+  initializeBird() {
     if (this.bird.body.y >= this.config.height || this.bird.body.y <= 0) {
       this.restartBirdPosition();
     }
-
-    this.recylePipes();
   }
 
   flap(bird) {
-    console.log("55", bird);
     bird.body.velocity.y = -this.config.flapVelocity;
   }
 
@@ -81,8 +96,6 @@ class PlayScene extends phaser.Scene {
       this.config.maxPipePadding,
       this.config.height - this.config.maxPipePadding - pipeVerticleDistance
     );
-
-    console.log("80", pipeVerticlePosition);
 
     const rightMostPipe = this.getRightMostPipe();
     const pipeHorizontalDistance =

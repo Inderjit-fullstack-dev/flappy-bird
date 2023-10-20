@@ -21,19 +21,18 @@ const gameConfig = {
 };
 
 let bird = null;
-let upperPipe = null;
-let lowerPipe = null;
-const pipeDistanceRange = [150, 250];
-let pipeDistance = phaser.Math.Between(...pipeDistanceRange);
-let pipeVerticlePosition = getVerticlePosition(50);
-const FLAP_VELOCITY = 100;
+const pipeVerticleDistanceRange = [150, 250];
+const pipeHorizontalDistanceRange = [400, 450];
+
+const FLAP_VELOCITY = 150;
 const intialBirdPosition = {
   x: gameConfig.width * 0.1,
   y: gameConfig.height / 2,
 };
 
 const TOTAL_PIPES = 4;
-let pipeHorizontalDistance = 0;
+
+let pipes = null;
 
 function preload() {
   this.load.image("sky", "assets/sky.png");
@@ -53,11 +52,16 @@ function create() {
     .sprite(intialBirdPosition.x, intialBirdPosition.y, "bird")
     .setOrigin(0);
 
+  // creating groups
+  pipes = this.physics.add.group();
+
   for (let i = 0; i < TOTAL_PIPES; i++) {
-    const uPipe = this.physics.add.sprite(0, 0, "pipe").setOrigin(0, 1);
-    const lPipe = this.physics.add.sprite(0, 0, "pipe").setOrigin(0, 0);
+    const uPipe = pipes.create(0, 0, "pipe").setOrigin(0, 1);
+    const lPipe = pipes.create(0, 0, "pipe").setOrigin(0, 0);
     placePipe(uPipe, lPipe);
   }
+
+  pipes.setVelocityX(-200);
 
   // adding physics gravity to the bird
 
@@ -70,7 +74,7 @@ function create() {
     .on("down", flap);
 }
 
-function update(time, delta) {
+function update() {
   if (bird.body.y >= gameConfig.height || bird.body.y <= 0) {
     restartBirdPosition();
   }
@@ -85,23 +89,34 @@ function restartBirdPosition() {
   bird.body.velocity.y = FLAP_VELOCITY;
 }
 
-function getVerticlePosition(range) {
-  return phaser.Math.Between(range, gameConfig.height - range - pipeDistance);
-}
-
 function placePipe(uPipe, lPipe) {
-  pipeHorizontalDistance += 400;
-  console.log("pipeHorizontalDistance", pipeHorizontalDistance);
-  pipeVerticlePosition = getVerticlePosition(50);
+  const pipeVerticleDistance = phaser.Math.Between(
+    ...pipeVerticleDistanceRange
+  );
+
+  const pipeVerticlePosition = phaser.Math.Between(
+    50,
+    gameConfig.height - 50 - pipeVerticleDistance
+  );
+
+  const rightMostPipe = getRightMostPipe();
+  const pipeHorizontalDistance =
+    rightMostPipe + phaser.Math.Between(...pipeHorizontalDistanceRange);
 
   uPipe.x = pipeHorizontalDistance;
   uPipe.y = pipeVerticlePosition;
 
   lPipe.x = uPipe.x;
-  lPipe.y = uPipe.y + pipeDistance;
+  lPipe.y = uPipe.y + pipeVerticleDistance;
+}
 
-  uPipe.body.velocity.x = -200;
-  lPipe.body.velocity.x = -200;
+function getRightMostPipe() {
+  let rightMostX = 0;
+  pipes.getChildren().forEach(function (pipe) {
+    rightMostX = Math.max(pipe.x, rightMostX);
+  });
+
+  return rightMostX;
 }
 
 new phaser.Game(gameConfig);
